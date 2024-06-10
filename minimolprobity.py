@@ -1,5 +1,9 @@
 #!/usr/bin/python3
-docstring="minimolprobity.py input.pdb"
+docstring='''
+minimolprobity.py input.pdb
+
+minimolprobity.py input.pdb output.txt
+'''
 import sys
 import subprocess
 import os
@@ -77,7 +81,7 @@ def process_raw_probe_output(probe_unformatted):
     return filter_dicts(new_clash_hash, new_hbond_hash)
 
 if __name__=="__main__":
-    if len(sys.argv)!=2:
+    if len(sys.argv)<=1:
         sys.stderr.write(docstring)
         exit()
 
@@ -107,8 +111,8 @@ if __name__=="__main__":
     clashscore=0
     if n_atoms:
         clashscore = (n_clashes * 1000.) / n_atoms
-    print("n_clashes\t%d"%n_clashes)
-    print("clashscore\t%.2f"%clashscore)
+    txt="n_clashes\t%d\n"%n_clashes
+    txt+="clashscore\t%.2f\n"%clashscore
 
 
     cmd=prekin_command+' -pperptoline -pperpdump '+infile
@@ -120,8 +124,8 @@ if __name__=="__main__":
     for line in stdout.splitlines()[1:]:
         numPperp+=1
         numPperpOutliers+=(': X :' in line)
-    print("numPperpOutliers\t%d"%numPperpOutliers)
-    print("numPperp\t%d"%numPperp)
+    txt+="numPperpOutliers\t%d\n"%numPperpOutliers
+    txt+="numPperp\t%d\n"%numPperp
 
     cmd="java -Xmx512m -cp %s dangle.Dangle rnabb %s | %s -report"%(
         dangle_command,infile,suitename_command)
@@ -138,5 +142,11 @@ if __name__=="__main__":
             numSuiteOutliers+=int(line.split(' ')[0])
         elif "suites are  outliers" in line:
             numSuiteOutliers+=int(line.lstrip().split(' ')[0])
-    print("numSuiteOutliers\t%d"%numSuiteOutliers)
-    print("numSuites\t%d"%numSuites)
+    txt+="numSuiteOutliers\t%d\n"%numSuiteOutliers
+    txt+="numSuites\t%d\n"%numSuites
+    if len(sys.argv)==2:
+        print(txt.rstrip())
+    else:
+        fp=open(sys.argv[2],'w')
+        fp.write(txt)
+        fp.close()
